@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscrição e Tabela de Participantes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            text-align: center;
+            padding: 8px;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+        }
+        .button-blue {
+            background-color: #007bff;
+            color: white;
+        }
+        .button-blue:hover {
+            background-color: #0056b3;
+        }
+        .button-red {
+            background-color: #dc3545;
+            color: white;
+        }
+        .button-red:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+  <img src="IMAGENS/Camp.png" alt="Descrição da imagem" width="460" height="460">
+  <h1>🔥Agendamento das 21:30🔥</h1>
+  <h3>Após completar as 48 vagas entraremos em contato para o pagamento da inscrição!</h3>
+
+  <h1></h1>
+  
+    <form id="formInscricao" onsubmit="adicionarParticipante(event)">
+        <label for="nick"> <h4>Nick do Jogo: </label>
+        <input type="text" id="nick" name="nick" required="nick" </h4> 
+        <br><br>
+        <label for="celular">Número de Celular:</label>
+        <input type="tel" id="celular" name="celular" value="+55"  required maxlength="14">
+        <br><br>
+        <button type="submit" class="button-blue">Inscrever</button>
+    </form>
+    
+    <h2>Lista de Participantes</h2>
+    <table id="tabelaParticipantes">
+        <tr>
+            <th>Posição</th>
+            <th>Nick do Jogo</th>
+            <th>Número de Celular</th>
+            <th>Ação</th>
+        </tr>
+    </table>
+
+    <script>
+        const maxParticipantes = 48;
+        const senha = "joao4321";
+
+        document.addEventListener('DOMContentLoaded', carregarParticipantes);
+
+        function adicionarParticipante(event) {
+            event.preventDefault();
+
+            const nick = document.getElementById('nick').value.trim();
+            const celular = document.getElementById('celular').value.trim();
+            const tabela = document.getElementById('tabelaParticipantes');
+            const numParticipantes = tabela.rows.length - 1;
+
+            if (numParticipantes < maxParticipantes) {
+                const novaLinha = tabela.insertRow();
+                const celulaPosicao = novaLinha.insertCell(0);
+                const celulaNick = novaLinha.insertCell(1);
+                const celulaCelular = novaLinha.insertCell(2);
+                const celulaAcao = novaLinha.insertCell(3);
+
+                celulaPosicao.textContent = numParticipantes + 1;
+                celulaNick.textContent = nick;
+                celulaCelular.textContent = celular;
+                celulaAcao.innerHTML = `<button class="button-red" onclick="confirmarRemocao(${numParticipantes + 1}, this)">Remover</button>`;
+
+                salvarParticipante({ posicao: numParticipantes + 1, nick, celular });
+                document.getElementById('formInscricao').reset();
+            } else {
+                alert('O número máximo de participantes foi atingido.');
+            }
+        }
+
+        function salvarParticipante(participante) {
+            let participantes = JSON.parse(localStorage.getItem('participantes')) || [];
+            participantes.push(participante);
+            localStorage.setItem('participantes', JSON.stringify(participantes));
+        }
+
+        function carregarParticipantes() {
+            const participantes = JSON.parse(localStorage.getItem('participantes')) || [];
+            const tabela = document.getElementById('tabelaParticipantes');
+
+            participantes.forEach(participante => {
+                const novaLinha = tabela.insertRow();
+                const celulaPosicao = novaLinha.insertCell(0);
+                const celulaNick = novaLinha.insertCell(1);
+                const celulaCelular = novaLinha.insertCell(2);
+                const celulaAcao = novaLinha.insertCell(3);
+
+                celulaPosicao.textContent = participante.posicao;
+                celulaNick.textContent = participante.nick;
+                celulaCelular.textContent = participante.celular;
+                celulaAcao.innerHTML = `<button class="button-red" onclick="confirmarRemocao(${participante.posicao}, this)">Remover</button>`;
+            });
+        }
+
+        function confirmarRemocao(posicao, botao) {
+            const senhaInput = prompt("Digite a senha para remover esta inscrição:");
+            if (senhaInput === senha) {
+                removerParticipante(posicao, botao);
+            } else {
+                alert("Senha incorreta!");
+            }
+        }
+
+        function removerParticipante(posicao, botao) {
+            const participantes = JSON.parse(localStorage.getItem('participantes')) || [];
+            const novoParticipantes = participantes.filter(p => p.posicao !== posicao);
+
+            localStorage.setItem('participantes', JSON.stringify(novoParticipantes));
+
+            const linha = botao.parentNode.parentNode;
+            linha.parentNode.removeChild(linha);
+
+            atualizarPosicoes();
+        }
+
+        function atualizarPosicoes() {
+            const tabela = document.getElementById('tabelaParticipantes');
+            let participantes = JSON.parse(localStorage.getItem('participantes')) || [];
+
+            for (let i = 1; i < tabela.rows.length; i++) {
+                const novaPosicao = i;
+                tabela.rows[i].cells[0].textContent = novaPosicao;
+                participantes[i - 1].posicao = novaPosicao;
+            }
+
+            localStorage.setItem('participantes', JSON.stringify(participantes));
+        }
+    </script>
+</body>
+</html>
